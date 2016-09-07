@@ -166,6 +166,7 @@
     <Compile Include="Controllers\RoxyFilemanController.cs" />
     <Compile Include="Controllers\TemplateController.cs" />
     <Compile Include="Controllers\CommonController.cs" />
+    <Compile Include="Controllers\ZPosController.cs" />
     <Compile Include="Controllers\VendorController.cs" />
     <Compile Include="Controllers\StoreController.cs" />
     <Compile Include="Controllers\ScheduleTaskController.cs" />
@@ -250,6 +251,7 @@
     <Compile Include="Models\Payments\PaymentMethodRestrictionModel.cs" />
     <Compile Include="Models\Plugins\OfficialFeedListModel.cs" />
     <Compile Include="Models\Plugins\PluginListModel.cs" />
+    <Compile Include="Models\ZPos\ZPosModel.cs" />
     <Compile Include="Models\Settings\AllSettingsListModel.cs" />
     <Compile Include="Models\Settings\ProductEditorSettingsModel.cs" />
     <Compile Include="Models\Settings\ModeModel.cs" />
@@ -2153,6 +2155,7 @@
     <Content Include="Views\Shipping\PickupPointProviders.cshtml" />
     <Content Include="Views\Shipping\ConfigurePickupPointProvider.cshtml" />
     <Content Include="Views\Shared\Confirm.cshtml" />
+    <Content Include="Views\Zpos\Order.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Product\AddAttributeCombinationPopup.cshtml" />

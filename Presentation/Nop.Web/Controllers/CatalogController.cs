@@ -1477,11 +1477,14 @@ namespace Nop.Web.Controllers
                 visibleIndividuallyOnly: true,
                 pageSize: productNumber);
 
-            var models =  PrepareProductOverviewModels(products, false, _catalogSettings.ShowProductImagesInSearchAutoComplete, _mediaSettings.AutoCompleteSearchThumbPictureSize).ToList();
+            var models =  PrepareProductOverviewModels(products, true, _catalogSettings.ShowProductImagesInSearchAutoComplete, _mediaSettings.AutoCompleteSearchThumbPictureSize).ToList();
             var result = (from p in models
                           select new
                           {
                               label = p.Name,
+                              id = p.Id,
+                              sku = p.Sku,
+                              price = p.ProductPrice.PriceValue,
                               producturl = Url.RouteUrl("Product", new { SeName = p.SeName }),
                               productpictureurl = p.DefaultPictureModel.ImageUrl
                           })
