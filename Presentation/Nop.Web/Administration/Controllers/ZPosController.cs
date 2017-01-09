@@ -14,6 +14,15 @@ using Nop.Services.Topics;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Kendoui;
 using Nop.Core.Domain.Catalog;
+using Nop.Services.Catalog;
+using Nop.Services.Orders;
+using System.Collections.Generic;
+using Nop.Core.Domain.Orders;
+using Nop.Core;
+using Nop.Core.Domain.Customers;
+using Nop.Web.Models.Checkout;
+using Nop.Services.Payments;
+using Nop.Services.Common;
 
 namespace Nop.Admin.Controllers
 {
@@ -33,7 +42,14 @@ namespace Nop.Admin.Controllers
         private readonly ICustomerService _customerService;
         private readonly ICustomerActivityService _customerActivityService;
         private readonly IAclService _aclService;
+        private readonly IProductService _productService;
+        private readonly IShoppingCartService _shoppingCartService;
+        private readonly IStoreContext _storeContext;
         private readonly CatalogSettings _catalogSettings;
+        private readonly IOrderProcessingService _orderProcessingService;
+        private readonly IGenericAttributeService _genericAttributeService;
+        private readonly IOrderService _orderService;
+        private readonly OrderSettings _orderSettings;
 
         #endregion Fields
 
@@ -51,7 +67,14 @@ namespace Nop.Admin.Controllers
             ICustomerService customerService,
             ICustomerActivityService customerActivityService,
             IAclService aclService,
-            CatalogSettings catalogSettings)
+            CatalogSettings catalogSettings,
+            IProductService productService,
+            IShoppingCartService shoppingCartService,
+            IStoreContext storeContext,
+            IOrderProcessingService orderProcessingService,
+            IGenericAttributeService genericAttributeService,
+            IOrderService orderService,
+            OrderSettings orderSettings)
         {
             this._topicService = topicService;
             this._languageService = languageService;
@@ -66,6 +89,13 @@ namespace Nop.Admin.Controllers
             this._customerActivityService = customerActivityService;
             this._aclService = aclService;
             this._catalogSettings = catalogSettings;
+            this._productService = productService;
+            this._shoppingCartService = shoppingCartService;
+            this._storeContext = storeContext;
+            this._genericAttributeService = genericAttributeService;
+            this._orderProcessingService = orderProcessingService;
+            this._orderService = orderService;
+            this._orderSettings = orderSettings;
         }
 
         #endregion
@@ -93,169 +123,128 @@ namespace Nop.Admin.Controllers
             return View(model);
         }
 
-        //[HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
-        //public ActionResult Create(TopicModel model, bool continueEditing)
-        //{
-        //    if (!_permissionService.Authorize(StandardPermissionProvider.ManageTopics))
-        //        return AccessDeniedView();
+        [HttpPost]
+        public ActionResult Order(FormCollection form)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageProducts))
+                return AccessDeniedView();
 
-        //    if (ModelState.IsValid)
-        //    {
-        //        if (!model.IsPasswordProtected)
-        //        {
-        //            model.Password = null;
-        //        }
+            int number, OrderId = 0;
+            var model = new ZposModel();
+            IList<string> addToCartWarnings = new List<string>();
+            var products = _productService.SearchProducts();
+            int customerId = Int32.TryParse(form["customers"], out number) ? number : 0;
+            int discount = Int32.TryParse(form["discount"], out number) ? number : 0;
 
-        //        var topic = model.ToEntity();
-        //        _topicService.InsertTopic(topic);
-        //        //search engine name
-        //        model.SeName = topic.ValidateSeName(model.SeName, topic.Title ?? topic.SystemName, true);
-        //        _urlRecordService.SaveSlug(topic, model.SeName, 0);
-        //        //ACL (customer roles)
-        //        SaveTopicAcl(topic, model);
-        //        //Stores
-        //        SaveStoreMappings(topic, model);
-        //        //locales
-        //        UpdateLocales(topic, model);
+            var customer = _customerService.GetCustomerById(customerId);
 
-        //        SuccessNotification(_localizationService.GetResource("Admin.ContentManagement.Topics.Added"));
+            //claer previous cart
+            customer.ShoppingCartItems.ToList().ForEach(sci => _shoppingCartService.DeleteShoppingCartItem(sci, false));
 
-        //        //activity log
-        //        _customerActivityService.InsertActivity("AddNewTopic", _localizationService.GetResource("ActivityLog.AddNewTopic"), topic.Title ?? topic.SystemName);
+            foreach (var product in products)
+            {
+                string item = form[string.Format("productId{0}", product.Id)];
 
-        //        if (continueEditing)
-        //        {
-        //            //selected tab
-        //            SaveSelectedTabName();
+                if (!String.IsNullOrEmpty(item))
+                {
+                    int itemQuantity = Int32.TryParse(form[string.Format("qty{0}", product.Id)], out number) ? number : 0;
 
-        //            return RedirectToAction("Edit", new { id = topic.Id });
-        //        }
-        //        return RedirectToAction("List");
-
-        //    }
-
-        //    //If we got this far, something failed, redisplay form
-
-        //    //templates
-        //    PrepareTemplatesModel(model);
-        //    //ACL
-        //    PrepareAclModel(model, null, true);
-        //    //Stores
-        //    PrepareStoresMappingModel(model, null, true);
-        //    return View(model);
-        //}
-
-        //public ActionResult Edit(int id)
-        //{
-        //    if (!_permissionService.Authorize(StandardPermissionProvider.ManageTopics))
-        //        return AccessDeniedView();
-
-        //    var topic = _topicService.GetTopicById(id);
-        //    if (topic == null)
-        //        //No topic found with the specified id
-        //        return RedirectToAction("List");
-
-        //    var model = topic.ToModel();
-        //    model.Url = Url.RouteUrl("Topic", new { SeName = topic.GetSeName() }, "http");
-        //    //templates
-        //    PrepareTemplatesModel(model);
-        //    //ACL
-        //    PrepareAclModel(model, topic, false);
-        //    //Store
-        //    PrepareStoresMappingModel(model, topic, false);
-        //    //locales
-        //    AddLocales(_languageService, model.Locales, (locale, languageId) =>
-        //    {
-        //        locale.Title = topic.GetLocalized(x => x.Title, languageId, false, false);
-        //        locale.Body = topic.GetLocalized(x => x.Body, languageId, false, false);
-        //        locale.MetaKeywords = topic.GetLocalized(x => x.MetaKeywords, languageId, false, false);
-        //        locale.MetaDescription = topic.GetLocalized(x => x.MetaDescription, languageId, false, false);
-        //        locale.MetaTitle = topic.GetLocalized(x => x.MetaTitle, languageId, false, false);
-        //        locale.SeName = topic.GetSeName(languageId, false, false);
-        //    });
-
-        //    return View(model);
-        //}
-
-        //[HttpPost, ParameterBasedOnFormName("save-continue", "continueEditing")]
-        //public ActionResult Edit(TopicModel model, bool continueEditing)
-        //{
-        //    if (!_permissionService.Authorize(StandardPermissionProvider.ManageTopics))
-        //        return AccessDeniedView();
-
-        //    var topic = _topicService.GetTopicById(model.Id);
-        //    if (topic == null)
-        //        //No topic found with the specified id
-        //        return RedirectToAction("List");
-
-        //    if (!model.IsPasswordProtected)
-        //    {
-        //        model.Password = null;
-        //    }
-
-        //    if (ModelState.IsValid)
-        //    {
-        //        topic = model.ToEntity(topic);
-        //        _topicService.UpdateTopic(topic);
-        //        //search engine name
-        //        model.SeName = topic.ValidateSeName(model.SeName, topic.Title ?? topic.SystemName, true);
-        //        _urlRecordService.SaveSlug(topic, model.SeName, 0);
-        //        //ACL (customer roles)
-        //        SaveTopicAcl(topic, model);
-        //        //Stores
-        //        SaveStoreMappings(topic, model);
-        //        //locales
-        //        UpdateLocales(topic, model);
-
-        //        SuccessNotification(_localizationService.GetResource("Admin.ContentManagement.Topics.Updated"));
-
-        //        //activity log
-        //        _customerActivityService.InsertActivity("EditTopic", _localizationService.GetResource("ActivityLog.EditTopic"), topic.Title ?? topic.SystemName);
-
-        //        if (continueEditing)
-        //        {
-        //            //selected tab
-        //            SaveSelectedTabName();
-
-        //            return RedirectToAction("Edit",  new {id = topic.Id});
-        //        }
-        //        return RedirectToAction("List");
-        //    }
+                    addToCartWarnings = _shoppingCartService.AddToCart(customer: customer,
+                                        product: product,
+                                        shoppingCartType: ShoppingCartType.ShoppingCart,
+                                        storeId: _storeContext.CurrentStore.Id,
+                                        quantity: itemQuantity);
+                    if (addToCartWarnings.Count > 0)
+                    {
+                        break;
+                    }
+                }
+            }
 
 
-        //    //If we got this far, something failed, redisplay form
+            if (addToCartWarnings.Count == 0)
+            {
+                #region Order
+                //validation
+                customer = _customerService.GetCustomerById(customerId);
 
-        //    model.Url = Url.RouteUrl("Topic", new { SeName = topic.GetSeName() }, "http");
-        //    //templates
-        //    PrepareTemplatesModel(model);
-        //    //ACL
-        //    PrepareAclModel(model, topic, true);
-        //    //Store
-        //    PrepareStoresMappingModel(model, topic, true);
-        //    return View(model);
-        //}
+                var cart = customer.ShoppingCartItems
+                    .Where(sci => sci.ShoppingCartType == ShoppingCartType.ShoppingCart)
+                    .LimitPerStore(_storeContext.CurrentStore.Id)
+                    .ToList();
 
-        //[HttpPost]
-        //public ActionResult Delete(int id)
-        //{
-        //    if (!_permissionService.Authorize(StandardPermissionProvider.ManageTopics))
-        //        return AccessDeniedView();
+                if (!cart.Any())
+                    return RedirectToAction("Order");
 
-        //    var topic = _topicService.GetTopicById(id);
-        //    if (topic == null)
-        //        //No topic found with the specified id
-        //        return RedirectToAction("List");
+                if (customer.IsGuest())
+                    return new HttpUnauthorizedResult();
 
-        //    _topicService.DeleteTopic(topic);
 
-        //    SuccessNotification(_localizationService.GetResource("Admin.ContentManagement.Topics.Deleted"));
+                //model
+                try
+                {
+                    var processPaymentRequest = new ProcessPaymentRequest();
 
-        //    //activity log
-        //    _customerActivityService.InsertActivity("DeleteTopic", _localizationService.GetResource("ActivityLog.DeleteTopic"), topic.Title ?? topic.SystemName);
+                    //prevent 2 orders being placed within an X seconds time frame
+                    if (!IsMinimumOrderPlacementIntervalValid(customer))
+                        throw new Exception(_localizationService.GetResource("Checkout.MinOrderPlacementInterval"));
 
-        //    return RedirectToAction("List");
-        //}
+                    //place order
+                    processPaymentRequest.StoreId = _storeContext.CurrentStore.Id;
+                    processPaymentRequest.CustomerId = customer.Id;
+                    processPaymentRequest.PaymentMethodSystemName = "Payments.PurchaseOrder";
+                    var placeOrderResult = _orderProcessingService.PlaceOrder(processPaymentRequest);
+                    OrderId = placeOrderResult.PlacedOrder.Id;
+                    if (placeOrderResult.Success)
+                    {
+                        return RedirectToRoute("PrintOrderDetails", new { orderId = OrderId });
+                    }
+
+                    foreach (var error in placeOrderResult.Errors)
+                        model.Warnings.Add(error);
+                }
+                catch (Exception exc)
+                {
+                    model.Warnings.Add(exc.Message);
+                }
+
+                //If we got this far, something failed, redisplay form
+                model.SearchTermMinimumLength = _catalogSettings.ProductSearchTermMinimumLength;
+
+                var customers = _customerService.GetAllCustomers(customerRoleIds: new[] { 3 });
+
+                foreach (var c in customers)
+                    model.Customers.Add(new SelectListItem
+                    {
+                        Text = c.GetFullName(),
+                        Value = c.Id.ToString()
+                    });
+
+                return View(model);
+                #endregion
+            }
+ 
+
+            return RedirectToAction("Order");
+        }
 
         #endregion
+
+        [NonAction]
+        protected virtual bool IsMinimumOrderPlacementIntervalValid(Customer customer)
+        {
+            //prevent 2 orders being placed within an X seconds time frame
+            if (_orderSettings.MinimumOrderPlacementInterval == 0)
+                return true;
+
+            var lastOrder = _orderService.SearchOrders(storeId: _storeContext.CurrentStore.Id,
+                customerId: customer.Id, pageSize: 1)
+                .FirstOrDefault();
+            if (lastOrder == null)
+                return true;
+
+            var interval = DateTime.UtcNow - lastOrder.CreatedOnUtc;
+            return interval.TotalSeconds > _orderSettings.MinimumOrderPlacementInterval;
+        }
     }
 }

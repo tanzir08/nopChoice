@@ -34,6 +34,12 @@
             }
         </div>
     }
+@if (Model.PrintMode)
+{
+    <div class="header-logo" style="float:right">
+        @Html.Action("Logo", "Common")
+    </div>
+}
     <div class="page-body">
         @Html.Widget("orderdetails_page_top", Model.Id)
         <div class="order-overview">
@@ -44,33 +50,46 @@
                 <li class="order-date">
                     @T("Order.OrderDate"): @Model.CreatedOn.ToString("D")
                 </li>
-                <li class="order-status">
-                    @T("Order.OrderStatus"): @Model.OrderStatus
+
+                <li class="order-date">
+                    <strong class="name">
+                        @Model.BillingAddress.FirstName @Model.BillingAddress.LastName
+                    </strong>
                 </li>
-                <li class="order-total">
-                    @T("Order.OrderTotal"): <strong>@Model.OrderTotal</strong>
+                <li class="phone">
+                    @T("Order.Phone"): @Model.BillingAddress.PhoneNumber
                 </li>
+                <li class="address1">
+                    @Model.BillingAddress.Address1 , @Model.BillingAddress.City
+                </li>
+
+@if (!Model.PrintMode)
+{
+    <li class="order-status">
+        @T("Order.OrderStatus"): @Model.OrderStatus
+    </li>
+    <li class="order-total">
+        @T("Order.OrderTotal"): <strong>@Model.OrderTotal</strong>
+    </li>
+}
             </ul>
             @Html.Widget("orderdetails_page_overview", Model.Id)
         </div>
         <div class="order-details-area">
             <div class="billing-info-wrap">
                 <div class="title">
-                    <strong>@T("Order.BillingAddress")</strong>
                 </div>
                 <div class="info-content">
                     <ul class="billing-info">
-                        <li class="name">
-                            @Model.BillingAddress.FirstName @Model.BillingAddress.LastName
-                        </li>
-                        <li class="email">
-                            @T("Order.Email"): @Model.BillingAddress.Email
-                        </li>
+                        @if (!Model.PrintMode)
+                        {
+                            <li class="email">
+                                @T("Order.Email"): @Model.BillingAddress.Email
+                            </li>
+                        }
                         @if (Model.BillingAddress.PhoneEnabled)
                         {
-                            <li class="phone">
-                                @T("Order.Phone"): @Model.BillingAddress.PhoneNumber
-                            </li>
+
                         }
                         @if (Model.BillingAddress.FaxEnabled)
                         {
@@ -86,9 +105,7 @@
                         }
                         @if (Model.BillingAddress.StreetAddressEnabled)
                         {
-                            <li class="address1">
-                                @Model.BillingAddress.Address1
-                            </li>
+
                         }
                         @if (Model.BillingAddress.StreetAddress2Enabled && !String.IsNullOrEmpty(Model.BillingAddress.Address2))
                         {
@@ -96,9 +113,9 @@
                                 @Model.BillingAddress.Address2
                             </li>
                         }
-                        @if (Model.BillingAddress.CityEnabled ||
+                        @if (!Model.PrintMode && (Model.BillingAddress.CityEnabled ||
                             Model.BillingAddress.StateProvinceEnabled ||
-                            Model.BillingAddress.ZipPostalCodeEnabled)
+                            Model.BillingAddress.ZipPostalCodeEnabled))
                         {
                             <li class="city-state-zip">
                                 @if (Model.BillingAddress.CityEnabled)
@@ -157,7 +174,7 @@
                             }
                         }
                     </ul>
-                    @if (!String.IsNullOrEmpty(Model.PaymentMethod))
+                    @if (!Model.PrintMode && !String.IsNullOrEmpty(Model.PaymentMethod))
                     {
                         <div class="side-list-wrap">
                             <ul class="side-list">

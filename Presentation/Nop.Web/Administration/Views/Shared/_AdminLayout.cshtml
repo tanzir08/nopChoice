@@ -128,6 +128,11 @@
                                 </li>
                                 @if (currentCustomer.IsRegistered())
                                 {
+                                    <li>
+                                        <a href="/Admin/ZPos/Order">
+                                            POS
+                                        </a>
+                                    </li>
                                     <li class="account-info">
                                         @currentCustomer.GetFullName()
                                     </li>
@@ -222,12 +227,12 @@
                 {
                     @*Would you like to remove the "Powered by nopCommerce" link in the bottom of the footer?
                         Please find more info at http://www.nopcommerce.com/copyrightremoval.aspx*@
-                    <div class="pull-left">
+                    @*<div class="pull-left">
                         Powered by <a href="http://www.nopcommerce.com/?utm_source=admin-panel&utm_medium=footer&utm_campaign=admin-panel" target="_blank">nopCommerce</a>
-                    </div>
+                    </div>*@
                 }
                 <div class="pull-right hidden-xs">
-                    <b>nopCommerce version @NopVersion.CurrentVersion</b>
+                    @*<b>nopCommerce version @NopVersion.CurrentVersion</b>*@
                 </div>
                 <div class="text-center">
                     @(EngineContext.Current.Resolve<Nop.Services.Helpers.IDateTimeHelper>().ConvertToUserTime(DateTime.Now).ToString("f"))

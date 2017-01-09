@@ -640,7 +640,9 @@ namespace Nop.Web.Controllers
         public ActionResult PrintOrderDetails(int orderId)
         {
             var order = _orderService.GetOrderById(orderId);
-            if (order == null || order.Deleted || _workContext.CurrentCustomer.Id != order.CustomerId)
+            if (order == null || order.Deleted
+                //_workContext.CurrentCustomer.Id != order.CustomerId
+                )
                 return new HttpUnauthorizedResult();
 
             var model = PrepareOrderDetailsModel(order);

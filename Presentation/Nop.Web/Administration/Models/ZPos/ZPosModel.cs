@@ -14,11 +14,14 @@ namespace Nop.Admin.Models.ZPos
         public ZposModel()
         {
             Customers = new List<SelectListItem>();
+            Warnings = new List<string>();
         }
 
         [NopResourceDisplayName("Admin.Customers")]
         [AllowHtml]
         public IList<SelectListItem> Customers { get; set; }
+
+        public IList<string> Warnings { get; set; }
 
         public int SearchTermMinimumLength { get; set; }
 

@@ -9,7 +9,7 @@
     Html.AppendCssFileParts("~/Themes/DefaultClean/Content/css/styles.css");
 }
 
-@using (Html.BeginForm())
+@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "pos-order-form" }))
 {
     @Html.AntiForgeryToken()
     <div class="content-header clearfix">
@@ -18,6 +18,17 @@
         </h1>
     </div>
     <div class="content">
+        @if (Model.Warnings.Count > 0)
+        {
+            <div class="callout callout-danger">
+                <ul>
+                    @foreach (var warning in Model.Warnings)
+                    {
+                        <li>@warning</li>
+                    }
+                </ul>
+            </div>
+        }
         <div class="form-horizontal">
             <div class="panel-group">
                 <div class="panel panel-default panel-search">
@@ -54,68 +65,73 @@
                     </div>
                 </div>
 
-                <br>
-
-                <div class="order-summary-content">
-                    <div class="table-wrapper">
-                        <table class="cart">
-                            <colgroup>
-                                <col width="1" />
-                                <col width="1" />
-                                <col />
-                                <col width="1" />
-                                <col width="1" />
-                                <col width="1" />
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th class="sku">
-                                        Delete
-                                    </th>
-                                    <th class="sku">
-                                        @T("ShoppingCart.SKU")
-                                    </th>
-                                    <th class="product">
-                                        @T("ShoppingCart.Product(s)")
-                                    </th>
-                                    <th class="unit-price">
-                                        @T("ShoppingCart.UnitPrice")
-                                    </th>
-                                    <th class="quantity">
-                                        @T("ShoppingCart.Quantity")
-                                    </th>
-                                    <th class="subtotal">
-                                        @T("ShoppingCart.ItemTotal")
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
             <div>
-                <h2>SubTotal : <span id="orderSub"> 0 </span></h2>
-                <h2>Discount : <input type="text" id="discount" /></h2>
-                <h2><b>Total</b> : <span id="orderTotal"> 0 </span></h2>
+            <div class="order-summary-content">
+                <div class="table-wrapper">
+                    <table class="cart">
+                        <colgroup>
+                            <col width="1" />
+                            <col width="1" />
+                            <col />
+                            <col width="1" />
+                            <col width="1" />
+                            <col width="1" />
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th class="sku">
+                                    Delete
+                                </th>
+                                <th class="sku">
+                                    @T("ShoppingCart.SKU")
+                                </th>
+                                <th class="product">
+                                    @T("ShoppingCart.Product(s)")
+                                </th>
+                                <th class="unit-price">
+                                    @T("ShoppingCart.UnitPrice")
+                                </th>
+                                <th class="quantity">
+                                    @T("ShoppingCart.Quantity")
+                                </th>
+                                <th class="subtotal">
+                                    @T("ShoppingCart.ItemTotal")
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
+
+            <br>
+
+            <h2>SubTotal : <span id="orderSub"> 0 </span></h2>
+            <h2>Discount : <input type="text" name="discount" id="discount" /></h2>
+            <h2><b>Total</b> : <span id="orderTotal"> 0 </span></h2>
+        </div>
             <div class="form-group">
                 <div class="col-md-8 col-md-offset-4">
                     <div class="pull-right">
-                        <a href="@Url.Action("Create")" class="btn bg-blue">
-                            <i class="fa fa-plus-square"></i>
-                            Final Order
-                        </a>
+                        @*<input type="submit" class="btn bg-blue" value="Final Order" />*@
+                        <input type="button" id="addtoquickcart2" name="addtoquickcart2" value="Order" class="btn bg-blue quick-cart-button-manual" />
+                        @*<i class="fa fa-plus-square"></i>
+                                Final Order
+                            </input>*@
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
     <script type="text/javascript">
         $(document).ready(function() {
-
+        
+            $('.quick-cart-button-manual').click(function () {
+                $('#pos-order-form').submit();
+            });
+    
             function updateTotal() {
                 var discount = $('#discount').val();
                 var sub = 0, temp;
@@ -148,13 +164,13 @@
 
             $('#discount').keypress(function(e){
                 if(e.which == 13){
-                    $(this).blur();    
+                    $(this).blur();
                 }
             });
 
             $('table').on('keypress', 'tr input.qty-input', function(e){
                 if(e.which == 13){
-                    $(this).blur();    
+                    $(this).blur();
                 }
             });
 
@@ -175,10 +191,10 @@
             function addToTable(product) {
                 var newRow = jQuery('<tr>'+
                     '<td><i id=del'+product.id+' class="fa fa-times remove" aria-hidden="true"></i></td>'+
-                    '<td>'+ product.sku +'</td>'+
+                    '<td><input type="hidden" name=productId'+product.id+' value="'+product.id+'"</input>'+ product.sku +'</td>'+
                     '<td>'+ product.label +'</td>'+
                     '<td><span class="product-unit-price" id="priceSpan'+product.id+'">'+ product.price +'</span></td>'+
-                    '<td class="quantity">'+ '<input type="text" id='+product.id+' class="qty-input" value=""</input>' +'</td>'+
+                    '<td class="quantity">'+ '<input type="text" name=qty'+product.id+' id='+product.id+' class="qty-input" value=""</input>' +'</td>'+
                     '<td class="subtotal" width="70px"><span class="product-subtotal" id="subtotalSpan'+product.id+'">'+ 0 +'</span></td>'+
                     '</tr>');
 

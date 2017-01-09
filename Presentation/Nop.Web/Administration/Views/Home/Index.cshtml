@@ -29,9 +29,9 @@
             @if (!Model.IsLoggedInAsVendor)
             {
                 <div class="row">
-                    <div class="col-md-12">
+                    @*<div class="col-md-12">
                         @Html.Action("NopCommerceNews", "Home")
-                    </div>
+                    </div>*@
                 </div>
             }
             @Html.Widget("admin_dashboard_news_after")
