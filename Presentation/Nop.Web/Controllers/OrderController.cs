@@ -178,6 +178,7 @@ namespace Nop.Web.Controllers
                 throw new ArgumentNullException("order");
             var model = new OrderDetailsModel();
 
+            model.CustomProperties["customerId"] = order.Customer.Id;
             model.Id = order.Id;
             model.CreatedOn = _dateTimeHelper.ConvertToUserTime(order.CreatedOnUtc, DateTimeKind.Utc);
             model.OrderStatus = order.OrderStatus.GetLocalizedEnum(_localizationService, _workContext);

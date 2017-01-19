@@ -18,7 +18,7 @@
 {
     <script type="text/javascript">
         $(document).ready(function () {
-            window.print();
+            //window.print();
         });
     </script>
 }
@@ -36,6 +36,10 @@
     }
 @if (Model.PrintMode)
 {
+    <div style="text-align:center">
+        <h1>Cash Memo</h1>
+    </div>
+    
     <div class="header-logo" style="float:right">
         @Html.Action("Logo", "Common")
     </div>
@@ -44,23 +48,30 @@
         @Html.Widget("orderdetails_page_top", Model.Id)
         <div class="order-overview">
             <div class="order-number">
-                <strong>@T("Order.Order#")@Model.Id</strong>
+                <strong>Order No: @Model.Id</strong>
             </div>
             <ul class="order-overview-content">
                 <li class="order-date">
-                    @T("Order.OrderDate"): @Model.CreatedOn.ToString("D")
+                    <b>@T("Order.OrderDate"): @Model.CreatedOn.ToString("D")</b>
                 </li>
 
                 <li class="order-date">
                     <strong class="name">
-                        @Model.BillingAddress.FirstName @Model.BillingAddress.LastName
+                        Name / ID: @Model.BillingAddress.FirstName @Model.BillingAddress.LastName / 
+                        @{
+                            if (Model.CustomProperties["customerId"] != null)
+                            {
+                                <span>@Model.CustomProperties["customerId"]</span>   
+                            }
+                         }
                     </strong>
                 </li>
                 <li class="phone">
-                    @T("Order.Phone"): @Model.BillingAddress.PhoneNumber
+                    <b>@T("Order.Phone"): @Model.BillingAddress.PhoneNumber</b>
                 </li>
                 <li class="address1">
-                    @Model.BillingAddress.Address1 , @Model.BillingAddress.City
+                    Address : @Model.BillingAddress.Address1
+                    District : @Model.BillingAddress.City
                 </li>
 
 @if (!Model.PrintMode)
@@ -494,6 +505,7 @@
                 <div class="table-wrapper">
                     <table class="data-table">
                         <colgroup>
+                            <col width="1" />
                             @if (Model.ShowSku)
                             {
                                 <col width="1" />
@@ -505,6 +517,9 @@
                         </colgroup>
                         <thead>
                             <tr>
+                                <th class="name">
+                                    SL
+                                </th>
                                 @if (Model.ShowSku)
                                 {
                                     <th class="sku">
@@ -526,64 +541,71 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var item in Model.Items)
-                            {
-                                <tr>
-                                    @if (Model.ShowSku)
-                                    {
+                            @{
+                                int index = 0;
+                                foreach (var item in Model.Items)
+                                {
+                                    ++index;
+                                    <tr>
                                         <td class="sku">
-                                            <label class="td-title">@T("Order.Product(s).SKU"):</label>
-                                            <span class="sku-number">@item.Sku</span>
+                                            <span>@index</span>
                                         </td>
-                                    }
-                                    <td class="product">
-                                        @if (!Model.PrintMode)
+                                        @if (Model.ShowSku)
                                         {
-                                            <em><a href="@Url.RouteUrl("Product", new { SeName = item.ProductSeName })">@item.ProductName</a></em>
+                                            <td class="sku">
+                                                <label class="td-title">@T("Order.Product(s).SKU"):</label>
+                                                <span class="sku-number">@item.Sku</span>
+                                            </td>
                                         }
-                                        else
-                                        {
-                                            @item.ProductName
-                                        }
-                                        @if (!String.IsNullOrEmpty(item.AttributeInfo))
-                                        {
-                                            <div class="attributes">
-                                                @Html.Raw(item.AttributeInfo)
-                                            </div>
-                                        }
-                                        @if (!String.IsNullOrEmpty(item.RentalInfo))
-                                        {
-                                            <div class="rental-info">
-                                                @Html.Raw(item.RentalInfo)
-                                            </div>
-                                        }
-                                        @if (item.DownloadId > 0)
-                                        {
-                                            <div class="download">
-                                                <a href="@Url.RouteUrl("GetDownload", new { orderItemId = item.OrderItemGuid })">@T("DownloadableProducts.Fields.Download")</a>
-                                            </div>
-                                        }
-                                        @if (item.LicenseId > 0)
-                                        {
-                                            <div class="download license">
-                                                <a href="@Url.RouteUrl("GetLicense", new {orderItemId = item.OrderItemGuid})">@T("DownloadableProducts.Fields.DownloadLicense")</a>
-                                            </div>
-                                        }
-                                        @Html.Widget("orderdetails_product_line", item.Id)
-                                    </td>
-                                    <td class="unit-price">
-                                        <label class="td-title">@T("Order.Product(s).Price"):</label>
-                                        <span class="product-unit-price">@item.UnitPrice</span>
-                                    </td>
-                                    <td class="quantity">
-                                        <label class="td-title">@T("Order.Product(s).Quantity"):</label>
-                                        <span class="product-quantity">@item.Quantity</span>
-                                    </td>
-                                    <td class="total">
-                                        <label class="td-title">@T("Order.Product(s).Total"):</label>
-                                        <span class="product-subtotal">@item.SubTotal</span>
-                                    </td>
-                                </tr>
+                                        <td class="product">
+                                            @if (!Model.PrintMode)
+                                            {
+                                                <em><a href="@Url.RouteUrl("Product", new { SeName = item.ProductSeName })">@item.ProductName</a></em>
+                                            }
+                                            else
+                                            {
+                                                @item.ProductName
+                                            }
+                                            @if (!String.IsNullOrEmpty(item.AttributeInfo))
+                                            {
+                                                <div class="attributes">
+                                                    @Html.Raw(item.AttributeInfo)
+                                                </div>
+                                            }
+                                            @if (!String.IsNullOrEmpty(item.RentalInfo))
+                                            {
+                                                <div class="rental-info">
+                                                    @Html.Raw(item.RentalInfo)
+                                                </div>
+                                            }
+                                            @if (item.DownloadId > 0)
+                                            {
+                                                <div class="download">
+                                                    <a href="@Url.RouteUrl("GetDownload", new { orderItemId = item.OrderItemGuid })">@T("DownloadableProducts.Fields.Download")</a>
+                                                </div>
+                                            }
+                                            @if (item.LicenseId > 0)
+                                            {
+                                                <div class="download license">
+                                                    <a href="@Url.RouteUrl("GetLicense", new {orderItemId = item.OrderItemGuid})">@T("DownloadableProducts.Fields.DownloadLicense")</a>
+                                                </div>
+                                            }
+                                            @Html.Widget("orderdetails_product_line", item.Id)
+                                        </td>
+                                        <td class="unit-price">
+                                            <label class="td-title">@T("Order.Product(s).Price"):</label>
+                                            <span class="product-unit-price">@item.UnitPrice</span>
+                                        </td>
+                                        <td class="quantity">
+                                            <label class="td-title">@T("Order.Product(s).Quantity"):</label>
+                                            <span class="product-quantity">@item.Quantity</span>
+                                        </td>
+                                        <td class="total">
+                                            <label class="td-title">@T("Order.Product(s).Total"):</label>
+                                            <span class="product-subtotal">@item.SubTotal</span>
+                                        </td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>
@@ -668,14 +690,14 @@
                             }
                             @if (Model.DisplayTax)
                             {
-                                <tr>
+                                @*<tr>
                                     <td class="cart-total-left">
                                         <label>@T("Order.Tax"):</label>
                                     </td>
                                     <td class="cart-total-right">
                                         <span>@Model.Tax</span>
                                     </td>
-                                </tr>
+                                </tr>*@
                             }
                             @if (!string.IsNullOrEmpty(Model.OrderTotalDiscount))
                             {
@@ -739,6 +761,22 @@
                 }
             </div>
         }
+
         @Html.Widget("orderdetails_page_bottom", Model.Id)
     </div>
 </div>
+@if (Model.PrintMode)
+{
+    <div style="position:fixed; bottom: 0;width: 100%">
+        <div class="actions" style="float:left">
+            Cash Received By
+        </div>
+        <div class="actions" style="float:right; margin-right:20px;">
+            Authorized By
+        </div>
+        <div class="actions" style="text-align:center">
+            Delivered By
+        </div>
+        <div style="text-align:center"><h3>Lalmatir Ghat, Borogola, Bogura. 051-62328, 01715-169791. Website : www.choicepublication.com</h3></div>
+    </div>
+}

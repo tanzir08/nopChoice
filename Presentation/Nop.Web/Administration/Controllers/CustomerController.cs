@@ -1773,6 +1773,13 @@ namespace Nop.Admin.Controllers
                 if (address.StateProvinceId == 0)
                     address.StateProvinceId = null;
                 customer.Addresses.Add(address);
+                
+                if (customer.BillingAddress == null)
+                    customer.BillingAddress = address;
+
+                if (customer.ShippingAddress == null)
+                    customer.ShippingAddress = address;
+
                 _customerService.UpdateCustomer(customer);
 
                 SuccessNotification(_localizationService.GetResource("Admin.Customers.Customers.Addresses.Added"));
