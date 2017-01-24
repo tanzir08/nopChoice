@@ -644,6 +644,20 @@ namespace Nop.Admin.Controllers
                 });
             }
 
+            //prepare customer payment
+            if (customer != null)
+            {
+                foreach (var payment in customer.CustomerPayments)
+                {
+                    model.CustomerPayments.Add(new CustomerModel.CustomerPayment
+                    {
+                        Id = payment.Id,
+                        CreatedOnUtc = payment.CreatedOnUtc,
+                        Amount = payment.Amount
+                    });
+                }
+            }
+
             //reward points history
             if (customer != null)
             {
@@ -2376,5 +2390,116 @@ namespace Nop.Admin.Controllers
         }
 
         #endregion
+
+        #region Customer Payment
+        [HttpPost]
+        public ActionResult CustomerPaymentList(DataSourceRequest command, int customerId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = _customerService.GetCustomerById(customerId);
+            if (customer == null || customer.Deleted)
+                //No customer found with the specified id
+                return RedirectToAction("List");
+
+            var paymentsModel = customer.CustomerPayments
+                .Select(x =>
+                {
+                    var paymentModel = new CustomerModel.CustomerPayment
+                    {
+                        Id = x.Id,
+                        CreatedOnUtc = x.CreatedOnUtc,
+                        Amount = x.Amount
+                    };
+                    return paymentModel;
+                })
+                .ToList();
+
+            var gridModel = new DataSourceResult
+            {
+                Data = paymentsModel,
+                Total = paymentsModel.Count
+            };
+
+            return Json(gridModel);
+        }
+
+        [HttpPost]
+        public ActionResult CustomerPaymentInsert(CustomerPaymentTemp model, int customerId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = _customerService.GetCustomerById(customerId);
+            if (customer == null || customer.Deleted)
+                //No customer found with the specified id
+                return RedirectToAction("List");
+
+            //insert payment
+            customer.CustomerPayments.Add(new CustomerPayment
+            {
+                CreatedOnUtc = DateTime.Parse(model.CreatedOnUtc),
+                Amount = model.Amount
+            });
+
+            _customerService.UpdateCustomer(customer);
+
+            return new NullJsonResult();
+        }
+
+        [HttpPost]
+        public ActionResult CustomerPaymentUpdate(CustomerPaymentTemp model, int customerId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = _customerService.GetCustomerById(customerId);
+            if (customer == null || customer.Deleted)
+                //No customer found with the specified id
+                return RedirectToAction("List");
+
+            var customerPyament = customer.CustomerPayments.Where(x => x.Id == model.Id).First();
+
+            customerPyament.Amount = model.Amount;
+            customerPyament.CreatedOnUtc = DateTime.Parse(model.CreatedOnUtc);
+            _customerService.UpdateCustomer(customer);
+
+            return new NullJsonResult();
+        }
+
+        [HttpPost]
+        public ActionResult CustomerPaymentDelete(int id, int customerId)
+        {
+            if (!_permissionService.Authorize(StandardPermissionProvider.ManageCustomers))
+                return AccessDeniedView();
+
+            var customer = _customerService.GetCustomerById(customerId);
+            if (customer == null || customer.Deleted)
+                //No customer found with the specified id
+                return RedirectToAction("List");
+
+            var customerPyament = customer.CustomerPayments.Where(x => x.Id == id).First();
+            customer.CustomerPayments.Remove(customerPyament);
+
+            _customerService.UpdateCustomer(customer);
+
+            return new NullJsonResult();
+        }
+        #endregion
+    }
+
+    //temp class
+    public class CustomerPaymentTemp : BaseNopEntityModel
+    {
+        /// <summary>
+        /// Gets or sets the customer payment time as string, because kendo POST doesnt pass date in datetime format of c#
+        /// </summary>
+        public String CreatedOnUtc { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value of customer payment
+        /// </summary>
+        public decimal Amount { get; set; }
     }
 }

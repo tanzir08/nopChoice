@@ -29,6 +29,7 @@ namespace Nop.Admin.Models.Customers
             this.CustomerAttributes = new List<CustomerAttributeModel>();
             this.AvailableNewsletterSubscriptionStores = new List<StoreModel>();
             this.RewardPointsAvailableStores = new List<SelectListItem>();
+            this.CustomerPayments = new List<CustomerPayment>();
         }
 
         public bool AllowUsersToChangeUsernames { get; set; }
@@ -187,6 +188,8 @@ namespace Nop.Admin.Models.Customers
         [UIHint("MultiSelect")]
         public IList<int> SelectedCustomerRoleIds { get; set; }
 
+        //customer payment
+        public List<CustomerPayment> CustomerPayments { get; set; }
 
         //newsletter subscriptions (per store)
         [NopResourceDisplayName("Admin.Customers.Customers.Fields.Newsletter")]
@@ -365,6 +368,19 @@ namespace Nop.Admin.Models.Customers
             public string Name { get; set; }
 
             public bool IsPreSelected { get; set; }
+        }
+
+        public class CustomerPayment : BaseNopEntityModel
+        {
+            /// <summary>
+            /// Gets or sets the customer payment time
+            /// </summary>
+            public DateTime CreatedOnUtc { get; set; }
+
+            /// <summary>
+            /// Gets or sets a value of customer payment
+            /// </summary>
+            public decimal Amount { get; set; }
         }
 
         #endregion

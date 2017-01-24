@@ -18,6 +18,7 @@
                 @if (Model.Id > 0)
                 {
                     @Html.RenderBootstrapTabHeader("tab-orders", @T("Admin.Customers.Customers.Orders"))
+                    @Html.RenderBootstrapTabHeader("tab-payments", @T("Admin.Customers.Customers.Payments"))
                     @Html.RenderBootstrapTabHeader("tab-address", @T("Admin.Customers.Customers.Addresses"))
                     @Html.RenderBootstrapTabHeader("tab-cart", @T("Admin.Customers.Customers.CurrentShoppingCart"))
                     @Html.RenderBootstrapTabHeader("tab-wishlist", @T("Admin.Customers.Customers.CurrentWishlist"))
@@ -35,6 +36,7 @@
                 @if (Model.Id > 0)
                 {
                     @Html.RenderBootstrapTabContent("tab-orders", @TabOrders())
+                    @Html.RenderBootstrapTabContent("tab-payments", @TabPayments())
                     @Html.RenderBootstrapTabContent("tab-address", @TabAddresses())
                     @Html.RenderBootstrapTabContent("tab-cart", @TabCurrentShoppingCart())
                     @Html.RenderBootstrapTabContent("tab-wishlist", @TabCurrentWishlist())
@@ -1040,6 +1042,11 @@
             </div>
         </div>
     </div>
+}
+
+@helper TabPayments()
+{
+    @Html.Partial("_CreateOrUpdate.Payments", Model)
 }
 
 @helper TabBackInStockSubscriptions()

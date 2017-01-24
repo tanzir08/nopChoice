@@ -2145,6 +2145,7 @@
     <Content Include="Views\Product\_CreateOrUpdate.PurchasedWithOrders.cshtml" />
     <Content Include="Views\Common\AclDisabledWarning.cshtml" />
     <Content Include="Views\Common\MultistoreDisabledWarning.cshtml" />
+    <Content Include="Views\Customer\_CreateOrUpdate.Payments.cshtml" />
     <None Include="Views\Product\_ProductAttributes.cshtml" />
     <Content Include="Views\Setting\_ReturnRequestReasons.cshtml" />
     <Content Include="Views\Setting\ReturnRequestReasonEdit.cshtml" />

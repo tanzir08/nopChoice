@@ -1,0 +1,175 @@
+﻿@model CustomerModel
+
+@using Nop.Core.Domain.Catalog
+@using Nop.Services
+
+
+<div class="panel-group">
+    @if (Model.Id > 0)
+    {
+        <div id="productattribute-edit" class="nav-tabs-custom">
+            <ul class="nav nav-tabs">
+                @Html.RenderBootstrapTabHeader("tab-attributes", @T("Admin.Customers.Customers.Payments"), true, "tab-attributes")
+            </ul>
+            <div class="tab-content">
+                @Html.RenderBootstrapTabContent("tab-attributes", @TabAttributes(), true, "tab-attributes")
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="panel panel-default">
+            <div class="panel-body">
+                You need to save the customer before you can add payment for this page.
+            </div>
+        </div>
+    }
+</div>
+
+@helper TabAttributes()
+{
+    var defaultGridPageSize = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().DefaultGridPageSize;
+    var gridPageSizes = EngineContext.Current.Resolve<Nop.Core.Domain.Common.AdminAreaSettings>().GridPageSizes;
+    
+    <div class="panel panel-default">
+    <div class="panel-body">
+        <div id="productattributemappings-grid"></div>
+        <script>
+            $(document).ready(function() {
+                $("#productattributemappings-grid").kendoGrid({
+                    dataSource: {
+                        type: "json",
+                        transport: {
+                            read: {
+                                url: "@Html.Raw(Url.Action("CustomerPaymentList", "Customer", new { customerId = Model.Id }))",
+                                type: "POST",
+                                dataType: "json",
+                                data: addAntiForgeryToken
+                            },
+                            create: {
+                                url: "@Html.Raw(Url.Action("CustomerPaymentInsert", "Customer", new { customerId = Model.Id }))",
+                                type: "POST",
+                                dataType: "json",
+                                data: function (e) {
+                                    var d = new Date(e.CreatedOnUtc);
+                                    var date = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+                                    e.CreatedOnUtc = date.toString();
+                                    return addAntiForgeryToken(e);
+                                }
+                            },
+                            update: {
+                                url: "@Html.Raw(Url.Action("CustomerPaymentUpdate", "Customer", new { customerId = Model.Id }))",
+                                type: "POST",
+                                dataType: "json",
+                                data: function (e) {
+                                    var d = new Date(e.CreatedOnUtc);
+                                    var date = (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+                                    e.CreatedOnUtc = date.toString();
+                                    return addAntiForgeryToken(e);
+                                }
+                            },
+                            destroy: {
+                                url: "@Html.Raw(Url.Action("CustomerPaymentDelete", "Customer", new { customerId = Model.Id }))",
+                                type: "POST",
+                                dataType: "json",
+                                data: addAntiForgeryToken
+                            }
+                        },
+                        schema: {
+                            data: "Data",
+                            total: "Total",
+                            errors: "Errors",
+                            model: {
+                                id: "Id",
+                                fields: {
+                                    CreatedOnUtc: { editable: true, type: "date"},
+                                    Amount: { editable: true, type: "number" },
+                                    Id: { editable: false, type: "number" }
+                                }
+                            }
+                        },
+                        requestEnd: function(e) {
+                            if (e.type == "create" || e.type == "update") {
+                                this.read();
+                            }
+                        },
+                        error: function(e) {
+                            display_kendoui_grid_error(e);
+                            // Cancel the changes
+                            this.cancelChanges();
+                        },
+
+                        pageSize: @(defaultGridPageSize),
+                        serverPaging: false,
+                        serverFiltering: false,
+                        serverSorting: false,
+                        sort: {
+                            field: "CreatedOnUtc",
+                            dir: "desc"
+                        }
+                    },
+                    pageable: {
+                        refresh: true,
+                        //numeric: true,
+                        //previousNext: true,
+                        //info: true,
+                        pageSizes: [@(gridPageSizes)]
+                    },
+                    sortable: {
+                        mode: "single",
+                        allowUnsort: true
+                    },
+                    toolbar: [{ name: "create", text: "@T("Admin.Common.AddNewRecord")" }],
+                    edit: function(e) {
+                    },
+                    editable: {
+                        confirmation: "@T("Admin.Common.DeleteConfirmation")",
+                        mode: "inline"
+                    },
+                    scrollable: false,
+                    columns: [
+                        {
+                            field: "CreatedOnUtc",
+                            title: "Date",
+                            template: "#= kendo.toString(kendo.parseDate(CreatedOnUtc, 'yyyy-MM-dd'), 'dd/MM/yyyy') #",
+                            width: 200
+                        }, {
+                            field: "Amount",
+                            title: "Amount",
+                            width: 150
+                        }, {
+                            command: [
+                                {
+                                    name: "edit",
+                                    text: {
+                                        edit: "@T("Admin.Common.Edit")",
+                                        update: "@T("Admin.Common.Update")",
+                                        cancel: "@T("Admin.Common.Cancel")"
+                                    }
+                                }, {
+                                    name: "destroy",
+                                    text: "@T("Admin.Common.Delete")"
+                                }
+                            ],
+                            width: 200
+                        }
+                    ]
+                });
+            });
+        </script>
+        <input type="submit" id="btnRefreshProductAttributes" style="display: none" />
+        <script type="text/javascript">
+            $(document).ready(function () {
+                $('#btnRefreshProductAttributes').click(function () {
+                    //refresh grid
+                    var grid = $("#productattributemappings-grid").data('kendoGrid');
+                    grid.dataSource.read();
+
+                    //return false to don't reload a page
+                    return false;
+                });
+            });
+        </script>
+    </div>
+</div>
+}
