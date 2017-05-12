@@ -37,7 +37,14 @@
 @if (Model.PrintMode)
 {
     <div style="text-align:center">
-        <h1>Cash Memo</h1>
+        @if (Model.OrderTotal.Contains("("))
+        {
+            <h1>Return Memo</h1>
+        }
+        else
+        {
+            <h1>Cash Memo</h1>   
+        }
     </div>
     
     <div class="header-logo" style="float:right">
@@ -48,7 +55,7 @@
         @Html.Widget("orderdetails_page_top", Model.Id)
         <div class="order-overview">
             <div class="order-number">
-                <strong>Order No: @Model.Id</strong>
+                <strong>Memo No: @Model.Id</strong>
             </div>
             <ul class="order-overview-content">
                 <li class="order-date">

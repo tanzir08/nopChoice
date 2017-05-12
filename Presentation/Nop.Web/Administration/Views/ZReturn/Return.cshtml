@@ -1,0 +1,227 @@
+﻿@model Nop.Admin.Models.ZPos.ZposModel
+
+@{
+    //page title
+    ViewBag.Title = "Return Page";
+    //active menu item (system name)
+    Html.SetActiveMenuItemSystemName("Topics");
+
+    Html.AppendCssFileParts("~/Themes/DefaultClean/Content/css/styles.css");
+}
+
+@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "pos-order-form" }))
+{
+    @Html.AntiForgeryToken()
+    <div class="content-header clearfix">
+        <h1 class="pull-left">
+            Return Memo
+        </h1>
+    </div>
+    <div class="content">
+        @if (Model.Warnings.Count > 0)
+        {
+            <div class="callout callout-danger">
+                <ul>
+                    @foreach (var warning in Model.Warnings)
+                    {
+                        <li>@warning</li>
+                    }
+                </ul>
+            </div>
+        }
+        <div class="form-horizontal">
+            <div class="panel-group">
+                <div class="panel panel-default panel-search">
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <div class="col-md-4">
+                                        Customer List
+                                    </div>
+                                    <div class="col-md-8">
+                                        @Html.NopDropDownList("Customers", Model.Customers)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel panel-default panel-search">
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <div class="col-md-4">
+                                        Search Books
+                                    </div>
+                                    <div class="col-md-8">
+                                        <input type="text" class="search-box-text" id="small-searchterms" autocomplete="off" name="q" placeholder="Type Book code here" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div>
+            <div class="order-summary-content">
+                <div class="table-wrapper">
+                    <table class="cart">
+                        <colgroup>
+                            <col width="1" />
+                            <col width="1" />
+                            <col />
+                            <col width="1" />
+                            <col width="1" />
+                            <col width="1" />
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th class="sku">
+                                    Delete
+                                </th>
+                                <th class="sku">
+                                    @T("ShoppingCart.SKU")
+                                </th>
+                                <th class="product">
+                                    @T("ShoppingCart.Product(s)")
+                                </th>
+                                <th class="unit-price">
+                                    @T("ShoppingCart.UnitPrice")
+                                </th>
+                                <th class="quantity">
+                                    @T("ShoppingCart.Quantity")
+                                </th>
+                                <th class="subtotal">
+                                    @T("ShoppingCart.ItemTotal")
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <br>
+
+            <h2>SubTotal : <span id="orderSub"> 0 </span></h2>
+            @*<h2>Discount : <input type="text" name="discount" id="discount" /></h2>*@
+            <h2><b>Total</b> : <span id="orderTotal"> 0 </span></h2>
+        </div>
+            <div class="form-group">
+                <div class="col-md-8 col-md-offset-4">
+                    <div class="pull-right">
+                        @*<input type="submit" class="btn bg-blue" value="Final Order" />*@
+                        <input type="button" id="addtoquickcart2" name="addtoquickcart2" value="Order" class="btn bg-blue quick-cart-button-manual" />
+                        @*<i class="fa fa-plus-square"></i>
+                                Final Order
+                            </input>*@
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function() {
+        
+            $('.quick-cart-button-manual').click(function () {
+                $('#pos-order-form').submit();
+            });
+    
+            function updateTotal() {
+                var discount = $('#discount').val();
+                var sub = 0, temp;
+                $('.cart tr').each(function(){
+                    temp = $(this).find('.product-subtotal').text();
+                    temp = isNaN(temp) ? 0 : temp;
+                    sub = Number(sub) + Number(temp);
+                })
+
+                discount = isNaN(discount) ? 0 : discount;
+
+                total = Number(sub - discount);
+
+                $('#orderSub').text(sub);
+                $('#orderTotal').text(total);
+            };
+
+            $('table').on('click','tr i.remove',function(e){
+                e.preventDefault();
+                $(this).closest('tr').remove();
+
+                //update total
+                updateTotal();
+            });
+
+            $('#discount').blur(function(e){
+                //update total
+                updateTotal();
+            });
+
+            $('#discount').keypress(function(e){
+                if(e.which == 13){
+                    $(this).blur();
+                }
+            });
+
+            $('table').on('keypress', 'tr input.qty-input', function(e){
+                if(e.which == 13){
+                    $(this).blur();
+                }
+            });
+
+            $('table').on('blur','tr input.qty-input',function(e){
+                var qty = $(this).context.value;
+                var price = $('#priceSpan'+$(this).context.id).text();
+
+                qty = isNaN(qty) ? 0 : qty;
+                price = isNaN(price) ? 0 : price;
+
+                $('#subtotalSpan'+$(this).context.id).text(qty * price);
+
+                //update total
+                updateTotal();
+
+            });
+
+            function addToTable(product) {
+                var newRow = jQuery('<tr>'+
+                    '<td><i id=del'+product.id+' class="fa fa-times remove" aria-hidden="true"></i></td>'+
+                    '<td><input type="hidden" name=productId'+product.id+' value="'+product.id+'"</input>'+ product.sku +'</td>'+
+                    '<td>'+ product.label +'</td>'+
+                    '<td><span class="product-unit-price" id="priceSpan'+product.id+'">'+ product.price +'</span></td>'+
+                    '<td class="quantity">'+ '<input type="text" name=qty'+product.id+' id='+product.id+' class="qty-input" value=""</input>' +'</td>'+
+                    '<td class="subtotal" width="70px"><span class="product-subtotal" id="subtotalSpan'+product.id+'">'+ 0 +'</span></td>'+
+                    '</tr>');
+
+                $('.cart').append(newRow);
+            };
+
+            $('#small-searchterms').autocomplete({
+                    delay: 500,
+                    minLength: @(Model.SearchTermMinimumLength.ToString()),
+                    source: '@(Url.RouteUrl("ProductSearchAutoComplete"))',
+                    appendTo: '.search-box',
+                    select: function(event, ui) {
+                        //setLocation(ui.item.producturl);
+                        addToTable(ui.item);
+                        $("#small-searchterms").val("");
+                        return false;
+                    }
+                })
+                .data("ui-autocomplete")._renderItem = function(ul, item) {
+                    var t = item.label;
+                    //html encode
+                    t = $('<div/>').text(t).html();
+                    return $("<li></li>")
+                        .data("item.autocomplete", item)
+                        .append("<a><span>" + t + "</span></a>")
+                        .appendTo(ul);
+                };
+        });
+    </script>
+}

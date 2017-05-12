@@ -1205,6 +1205,12 @@ namespace Nop.Services.Orders
                 {
                     #region Save order details
 
+                    //less revenue for return items
+                    if (processPaymentRequest.CustomValues.ContainsKey("return") && 
+                        processPaymentRequest.CustomValues["return"].Equals("1"))
+                    {
+                        details.OrderTotal = -details.OrderTotal;
+                    }
                     var order = SaveOrderDetails(processPaymentRequest, processPaymentResult, details);
                     result.PlacedOrder = order;
 
@@ -1290,7 +1296,16 @@ namespace Nop.Services.Orders
                         }
 
                         //inventory
-                        _productService.AdjustInventory(sc.Product, -sc.Quantity, sc.AttributesXml);
+                        //re add items for return items
+                        if (processPaymentRequest.CustomValues.ContainsKey("return") && 
+                            processPaymentRequest.CustomValues["return"].Equals("1"))
+                        {
+                            _productService.AdjustInventory(sc.Product, sc.Quantity, sc.AttributesXml);
+                        }
+                        else
+                        {
+                            _productService.AdjustInventory(sc.Product, -sc.Quantity, sc.AttributesXml);
+                        }
                     }
 
                     //clear shopping cart
